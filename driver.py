@@ -1,22 +1,41 @@
 import requests
 import json
 from base64 import b64encode
-# from neutron_lib import constants
 # from neutron_lib.exceptions import dns as dns_exc
-# from oslo_config import cfg
-import cfg as CONF
+from oslo_config import cfg
 
-# from neutron.services.externaldns import driver
+from neutron.services.externaldns import driver
+
+CONF = cfg.CONF
+
+solidserver_opts = [
+    cfg.StrOpt('url',
+               help=_('SOLIDServer REST API endpoint')),
+    cfg.StrOpt('space',
+               help=_('The name of the space into \
+                      which creating the IP addresses')),
+    cfg.StrOpt('user',
+               help=_('Username used to establish the connection.')),
+    cfg.StrOpt('password',
+               help=_('Password associated with the username.')),
+
+]
+
+solidserver_group = cfg.OptGroup(name='solidserver',
+                                 title='EfficientIP SolidServer options')
+CONF.register_group(solidserver_group)
+CONF.register_opts(solidserver_opts, group='solidserver')
 
 
-# class Designate(driver.ExternalDNSService):
-class Designate():
-    """Driver for Designate."""
+class Designate(driver.ExternalDNSService):
+    """Driver for SolidServer."""
 
     def __init__(self):
         """Initialize external dns service driver."""
-        self.headers = {'X-IPM-Username': b64encode(CONF.SOLIDSERVER_user),
-                        'X-IPM-Password': b64encode(CONF.SOLIDSERVER_password)}
+        print('External DNS Efficient IP init')
+        print(CONF.solidserver.url)
+        self.headers = {'X-IPM-Username': b64encode(CONF.solidserver.user),
+                        'X-IPM-Password': b64encode(CONF.solidserver.password)}
 
     def create_record_set(self, context, dns_domain, dns_name, records):
         """Create a record set in the specified zone.
@@ -31,11 +50,13 @@ class Designate():
         :raises: neutron.extensions.dns.DNSDomainNotFound
                  neutron.extensions.dns.DuplicateRecordSet
         """
-        payload = {'site_name': CONF.SOLIDSERVER_site,
+        print('External DNS EfficientIP')
+        print(records)
+        payload = {'site_name': CONF.solidserver.space,
                    'ip_name': '{}.{}'.format(dns_name, dns_domain),
                    'hostaddr': records[0],
                    'add_flag': 'new_only'}
-        r = requests.post(CONF.SOLIDSERVER_url+'ip_add', headers=self.headers,
+        r = requests.post(CONF.solidserver.url+'ip_add', headers=self.headers,
                           data=json.dumps(payload))
         print(r)
 
@@ -52,10 +73,12 @@ class Designate():
         :param records: the records in the set to be deleted
         :type records: List of Strings
         """
-        payload = {'site_name': CONF.SOLIDSERVER_site,
+        print('External DNS EfficientIP')
+        print(records)
+        payload = {'site_name': CONF.solidserver.space,
                    'ip_name': '{}.{}'.format(dns_name, dns_domain),
                    'hostaddr': records[0]}
-        r = requests.delete(CONF.SOLIDSERVER_url+'ip_delete',
+        r = requests.delete(CONF.solidserver.url+'ip_delete',
                             headers=self.headers,
                             params=payload)
         print(r)
