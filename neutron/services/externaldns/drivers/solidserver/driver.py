@@ -27,7 +27,7 @@ CONF.register_group(solidserver_group)
 CONF.register_opts(solidserver_opts, group='solidserver')
 
 
-class Designate(driver.ExternalDNSService):
+class SolidServer(driver.ExternalDNSService):
     """Driver for SolidServer."""
 
     def __init__(self):
