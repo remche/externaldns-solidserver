@@ -2,12 +2,15 @@
 import requests
 import json
 from base64 import b64encode
+
 # from neutron_lib.exceptions import dns as dns_exc
 from oslo_config import cfg
-
+from oslo_log import log
 from neutron._i18n import _
-
 from neutron.services.externaldns import driver
+
+
+LOG = log.getLogger(__name__)
 
 CONF = cfg.CONF
 
@@ -35,8 +38,8 @@ class SolidServer(driver.ExternalDNSService):
 
     def __init__(self):
         """Initialize external dns service driver."""
-        print('External DNS Efficient IP init')
-        print(CONF.solidserver.url)
+        LOG.debug('Init SolidServer external DNS to work with ' +
+                  CONF.solidserver.url)
         self.headers = {'X-IPM-Username': b64encode(CONF.solidserver.user),
                         'X-IPM-Password': b64encode(CONF.solidserver.password)}
 
@@ -53,15 +56,14 @@ class SolidServer(driver.ExternalDNSService):
         :raises: neutron.extensions.dns.DNSDomainNotFound
                  neutron.extensions.dns.DuplicateRecordSet
         """
-        print('External DNS EfficientIP')
-        print(records)
+        LOG.debug('Adding record {} to SolidServer'.format(records[0]))
         payload = {'site_name': CONF.solidserver.space,
-                   'ip_name': '{}.{}'.format(dns_name, dns_domain),
+                   'ip_name': '{}.{}'.format(dns_name, dns_domain.rstrip('.')),
                    'hostaddr': records[0],
                    'add_flag': 'new_only'}
         r = requests.post(CONF.solidserver.url+'ip_add', headers=self.headers,
                           data=json.dumps(payload))
-        print(r)
+        LOG.debug('Solidserver response :' + r.content)
 
     def delete_record_set(self, context, dns_domain, dns_name, records):
         """Delete a record set in the specified zone.
@@ -76,12 +78,11 @@ class SolidServer(driver.ExternalDNSService):
         :param records: the records in the set to be deleted
         :type records: List of Strings
         """
-        print('External DNS EfficientIP')
-        print(records)
+        LOG.debug('Removing record {} to SolidServer'.format(records[0]))
         payload = {'site_name': CONF.solidserver.space,
-                   'ip_name': '{}.{}'.format(dns_name, dns_domain),
+                   'ip_name': '{}.{}'.format(dns_name, dns_domain.rstrip('.')),
                    'hostaddr': records[0]}
         r = requests.delete(CONF.solidserver.url+'ip_delete',
                             headers=self.headers,
                             params=payload)
-        print(r)
+        LOG.debug('Solidserver response :' + r.content)
