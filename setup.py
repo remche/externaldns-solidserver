@@ -1,11 +1,20 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
+from os import path
+import sys
+
+if sys.version_info >= (3, 0):
+    directory = path.abspath(path.dirname(__file__))
+    with open(path.join(directory, 'README.md'), encoding='utf-8') as f:
+        long_description = f.read()
 
 setup(
     name='externaldns-solidserver',
-    version='0.1',
+    version='0.1.2',
 
     description='External DNS implemtation for EfficientIP SolidServer',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
 
     author='Rémi Cailletaud',
     author_email='remche@remche.org',
