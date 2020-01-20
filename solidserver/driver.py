@@ -4,6 +4,8 @@ from base64 import b64encode
 # from neutron_lib.exceptions import dns as dns_exc
 from oslo_config import cfg
 
+from neutron._i18n import _
+
 from neutron.services.externaldns import driver
 
 CONF = cfg.CONF

@@ -34,7 +34,7 @@ setup(
 
     entry_points={
         'neutron.services.external_dns_drivers': [
-            'solidserver = neutron.services.externaldns.drivers.solidserver.driver:SolidServer',
+            'solidserver = solidserver.driver:SolidServer',
         ],
     },
 
