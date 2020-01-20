@@ -3,7 +3,7 @@ import requests
 import json
 from base64 import b64encode
 
-# from neutron_lib.exceptions import dns as dns_exc
+from neutron_lib.exceptions import dns as dns_exc
 from oslo_config import cfg
 from oslo_log import log
 from neutron._i18n import _
@@ -43,22 +43,36 @@ class SolidServer(driver.ExternalDNSService):
         self.headers = {'X-IPM-Username': b64encode(CONF.solidserver.user),
                         'X-IPM-Password': b64encode(CONF.solidserver.password)}
 
+    def check_domain(self, dns_domain):
+        LOG.debug('Checking {} zone'.format(dns_domain))
+        url = '{}dns_zone_list/WHERE/dnszone_name=\'{}\''.format(
+            CONF.solidserver.url, dns_domain.rstrip('.'))
+        try:
+            r = requests.get(url, headers=self.headers)
+        except:
+            LOG.error('Something was terribly wrong')
+        if r.status_code != 200:
+            raise dns_exc.DNSDomainNotFound(dns_domain=dns_domain)
+
+    def check_name(self, ip_name):
+        LOG.debug('Checking {} name'.format(ip_name))
+        url = '{}ip_address_list/WHERE/name=\'{}\''.format(
+            CONF.solidserver.url, ip_name)
+        LOG.debug(url)
+        try:
+            r = requests.get(url, headers=self.headers)
+        except:
+            LOG.error('Something was terribly wrong')
+        if r.status_code != 204:
+            raise dns_exc.DuplicateRecordSet(dns_name=ip_name)
+
     def create_record_set(self, context, dns_domain, dns_name, records):
-        """Create a record set in the specified zone.
-        :param context: neutron api request context
-        :type context: neutron_lib.context.Context
-        :param dns_domain: the dns_domain where the record set will be created
-        :type dns_domain: String
-        :param dns_name: the name associated with the record set
-        :type dns_name: String
-        :param records: the records in the set
-        :type records: List of Strings
-        :raises: neutron.extensions.dns.DNSDomainNotFound
-                 neutron.extensions.dns.DuplicateRecordSet
-        """
-        LOG.debug('Adding record {} to SolidServer'.format(records[0]))
+        ip_name = '{}.{}'.format(dns_name, dns_domain.rstrip('.'))
+        LOG.debug('Adding record {} to {}'.format(ip_name, records[0]))
+        self.check_domain(dns_domain)
+        self.check_name(ip_name)
         payload = {'site_name': CONF.solidserver.space,
-                   'ip_name': '{}.{}'.format(dns_name, dns_domain.rstrip('.')),
+                   'ip_name': ip_name,
                    'hostaddr': records[0],
                    'add_flag': 'new_only'}
         r = requests.post(CONF.solidserver.url+'ip_add', headers=self.headers,
@@ -66,23 +80,14 @@ class SolidServer(driver.ExternalDNSService):
         LOG.debug('Solidserver response :' + r.content)
 
     def delete_record_set(self, context, dns_domain, dns_name, records):
-        """Delete a record set in the specified zone.
-        :param context: neutron api request context
-        :type context: neutron.context.Context
-        :param dns_domain: the dns_domain from which the record set will be
-         deleted
-        :type dns_domain: String
-        :param dns_name: the dns_name associated with the record set to be
-         deleted
-        :type dns_name: String
-        :param records: the records in the set to be deleted
-        :type records: List of Strings
-        """
         LOG.debug('Removing record {} to SolidServer'.format(records[0]))
         payload = {'site_name': CONF.solidserver.space,
                    'ip_name': '{}.{}'.format(dns_name, dns_domain.rstrip('.')),
                    'hostaddr': records[0]}
-        r = requests.delete(CONF.solidserver.url+'ip_delete',
-                            headers=self.headers,
-                            params=payload)
+        try:
+            r = requests.delete(CONF.solidserver.url+'ip_delete',
+                                headers=self.headers,
+                                params=payload)
+        except:
+            LOG.error('Something was terribly wrong')
         LOG.debug('Solidserver response :' + r.content)
