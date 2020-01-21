@@ -58,7 +58,6 @@ class SolidServer(driver.ExternalDNSService):
         LOG.debug('Checking {} name'.format(ip_name))
         url = '{}ip_address_list/WHERE/name=\'{}\''.format(
             CONF.solidserver.url, ip_name)
-        LOG.debug(url)
         try:
             r = requests.get(url, headers=self.headers)
         except:
@@ -77,6 +76,8 @@ class SolidServer(driver.ExternalDNSService):
                    'add_flag': 'new_only'}
         r = requests.post(CONF.solidserver.url+'ip_add', headers=self.headers,
                           data=json.dumps(payload))
+        if r.status_code != 201:
+            raise dns_exc.BadRequest(resource='SolidServer', msg=r.reason)
         LOG.debug('Solidserver response :' + r.content)
 
     def delete_record_set(self, context, dns_domain, dns_name, records):
