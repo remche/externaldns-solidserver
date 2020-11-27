@@ -10,7 +10,7 @@ if sys.version_info >= (3, 0):
 
 setup(
     name='externaldns-solidserver',
-    version='0.1.3',
+    version='0.1.4',
 
     description='External DNS implemtation for EfficientIP SolidServer',
     long_description=long_description,

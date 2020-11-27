@@ -40,8 +40,10 @@ class SolidServer(driver.ExternalDNSService):
         """Initialize external dns service driver."""
         LOG.debug('Init SolidServer external DNS to work with ' +
                   CONF.solidserver.url)
-        self.headers = {'X-IPM-Username': b64encode(CONF.solidserver.user),
-                        'X-IPM-Password': b64encode(CONF.solidserver.password)}
+        self.headers = {'X-IPM-Username':
+                        b64encode(CONF.solidserver.user.encode("utf-8")),
+                        'X-IPM-Password':
+                        b64encode(CONF.solidserver.password.encode("utf-8"))}
 
     def check_domain(self, dns_domain):
         LOG.debug('Checking {} zone'.format(dns_domain))
