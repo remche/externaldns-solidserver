@@ -80,7 +80,7 @@ class SolidServer(driver.ExternalDNSService):
                           data=json.dumps(payload))
         if r.status_code != 201:
             raise dns_exc.BadRequest(resource='SolidServer', msg=r.reason)
-        LOG.debug('Solidserver response :' + r.content)
+        LOG.debug('Solidserver response :' + r.content.decode('utf-8'))
 
     def delete_record_set(self, context, dns_domain, dns_name, records):
         LOG.debug('Removing record {} to SolidServer'.format(records[0]))
@@ -93,4 +93,4 @@ class SolidServer(driver.ExternalDNSService):
                                 params=payload)
         except:
             LOG.error('Something was terribly wrong')
-        LOG.debug('Solidserver response :' + r.content)
+        LOG.debug('Solidserver response :' + r.content.decode('utf-8'))
