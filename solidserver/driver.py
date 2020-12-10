@@ -24,6 +24,8 @@ solidserver_opts = [
                help=_('Username used to establish the connection.')),
     cfg.StrOpt('password',
                help=_('Password associated with the username.')),
+    cfg.BoolOpt('verify', default=True,
+               help=_('Verify SSL')),
 
 ]
 
@@ -50,7 +52,8 @@ class SolidServer(driver.ExternalDNSService):
         url = '{}dns_zone_list/WHERE/dnszone_name=\'{}\''.format(
             CONF.solidserver.url, dns_domain.rstrip('.'))
         try:
-            r = requests.get(url, headers=self.headers)
+            r = requests.get(url, headers=self.headers,
+                             verify=CONF.solidserver.verify)
         except:
             LOG.error('Something was terribly wrong')
         if r.status_code != 200:
@@ -61,7 +64,8 @@ class SolidServer(driver.ExternalDNSService):
         url = '{}ip_address_list/WHERE/name=\'{}\''.format(
             CONF.solidserver.url, ip_name)
         try:
-            r = requests.get(url, headers=self.headers)
+            r = requests.get(url, headers=self.headers,
+                             verify=CONF.solidserver.verify)
         except:
             LOG.error('Something was terribly wrong')
         if r.status_code != 204:
@@ -77,7 +81,8 @@ class SolidServer(driver.ExternalDNSService):
                    'hostaddr': records[0],
                    'add_flag': 'new_only'}
         r = requests.post(CONF.solidserver.url+'ip_add', headers=self.headers,
-                          data=json.dumps(payload))
+                          data=json.dumps(payload),
+                          verify=CONF.solidserver.verify)
         if r.status_code != 201:
             raise dns_exc.BadRequest(resource='SolidServer', msg=r.reason)
         LOG.debug('Solidserver response :' + r.content.decode('utf-8'))
@@ -90,7 +95,8 @@ class SolidServer(driver.ExternalDNSService):
         try:
             r = requests.delete(CONF.solidserver.url+'ip_delete',
                                 headers=self.headers,
-                                params=payload)
+                                params=payload,
+                                verify=CONF.solidserver.verify)
         except:
             LOG.error('Something was terribly wrong')
         LOG.debug('Solidserver response :' + r.content.decode('utf-8'))
